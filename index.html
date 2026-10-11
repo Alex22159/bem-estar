@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meu Assistente de Bem-Estar</title>
+<meta name="description" content="Responda nove perguntas rápidas e veja seu IMC, uma nota de hábitos e dicas sobre sono, água, movimento e estresse.">
+<meta property="og:title" content="Meu Assistente de Bem-Estar">
+<meta property="og:description" content="Nove perguntas rápidas. Você recebe seu IMC, uma nota de hábitos e dicas para o dia a dia.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#E9F2EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D222A" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #E9F2EF;
+    --surface: #F7FBFA;
+    --ink: #12303A;
+    --ink-2: #48646E;
+    --line: #B9CFCB;
+    --accent: #17697A;
+    --on-accent: #FFFFFF;
+    --focus: #0B4F5E;
+    --water: #2A9BAF;
+    --ok: #1F7A4D;
+    --atencao: #8A5A00;
+    --alerta: #B04A12;
+    --grave: #B3263E;
+    --info: #1F6FA3;
+    --ff-display: "Bricolage Grotesque", ui-rounded, system-ui, sans-serif;
+    --ff-body: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0D222A;
+      --surface: #13303A;
+      --ink: #E6F2F0;
+      --ink-2: #9DB8BF;
+      --line: #2E4C57;
+      --accent: #7CCBD8;
+      --on-accent: #062029;
+      --focus: #B7ECF5;
+      --water: #4FB7C9;
+      --ok: #6FD3A0;
+      --atencao: #F2C14E;
+      --alerta: #F4975A;
+      --grave: #FF8A9B;
+      --info: #7CC4F0;
+      color-scheme: dark;
+    }
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 400 1.0625rem/1.55 var(--ff-body);
+    min-height: 100dvh;
+  }
+
+  .app {
+    max-width: 34rem;
+    margin: 0 auto;
+    padding: 1.25rem 1.25rem 2.5rem;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- Progresso ---------- */
+  .progresso {
+    display: flex;
+    align-items: center;
+    gap: .875rem;
+    font-size: .9375rem;
+    color: var(--ink-2);
+    min-height: 1.5rem;
+  }
+  .progresso[hidden] { display: none; }
+  .trilho { flex: 1; height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+  .trilho i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .35s ease; }
+
+  main { flex: 1; display: flex; flex-direction: column; justify-content: center; padding-block: 2rem 1rem; }
+  .passo[hidden] { display: none !important; }
+
+  /* ---------- Tipografia ---------- */
+  h1, h2, h3 { font-family: var(--ff-display); letter-spacing: -.02em; text-wrap: balance; }
+  h1 { font-size: clamp(2.6rem, 12vw, 4.25rem); line-height: 1; font-weight: 700; margin: 0 0 1.25rem; }
+  h2 { font-size: clamp(2rem, 8.5vw, 3.1rem); line-height: 1.04; font-weight: 700; margin: 0 0 1.75rem; }
+  h2:focus, h1:focus { outline: none; }
+  .apoio { color: var(--ink-2); margin: -.75rem 0 1.75rem; max-width: 30rem; }
+  .intro-texto { font-size: 1.1875rem; max-width: 28rem; margin: 0 0 2rem; }
+  .nota-privacidade { color: var(--ink-2); font-size: .9375rem; margin: 1.25rem 0 0; }
+
+  /* ---------- Campos ---------- */
+  .rotulo { display: block; font-size: .9375rem; color: var(--ink-2); margin-bottom: .125rem; }
+  .campo input[type="text"] {
+    width: 100%;
+    font: 600 clamp(1.5rem, 6.5vw, 2.125rem)/1.2 var(--ff-display);
+    letter-spacing: -.01em;
+    color: var(--ink);
+    background: transparent;
+    border: 0;
+    border-bottom: 3px solid var(--line);
+    border-radius: 0;
+    padding: .5rem 0;
+  }
+  .campo input[type="text"]::placeholder { color: var(--ink-2); opacity: .55; font-weight: 500; }
+  .campo input[aria-invalid="true"] { border-bottom-color: var(--grave); }
+  .duplo { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .erro { color: var(--grave); font-weight: 600; margin: .75rem 0 0; min-height: 1.55em; }
+
+  :where(input, button):focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+
+  /* ---------- Opções (humor, atividade) ---------- */
+  .opcoes { display: grid; gap: .75rem; border: 0; padding: 0; margin: 0; min-inline-size: 0; }
+  .opcoes.duas { grid-template-columns: 1fr 1fr; }
+  .opcao { position: relative; display: block; }
+  .opcao input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+  .opcao span {
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    min-height: 3.75rem;
+    padding: 1rem 1.25rem;
+    border: 2px solid var(--line);
+    border-radius: 1.125rem;
+    background: var(--surface);
+    font: 600 1.1875rem/1.2 var(--ff-body);
+  }
+  .opcoes:not(.duas) .opcao span { justify-content: flex-start; }
+  .opcao input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .opcao input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 3px; }
+  .retorno { min-height: 1.6em; margin: 1rem 0 0; color: var(--ink-2); }
+
+  /* ---------- Controles deslizantes ---------- */
+  .valor { font: 700 clamp(4rem, 20vw, 6rem)/1 var(--ff-display); letter-spacing: -.04em; margin: 0; }
+  .unidade { font: 500 1.25rem var(--ff-body); letter-spacing: 0; color: var(--ink-2); margin-left: .5rem; }
+  .dica-valor { color: var(--ink-2); margin: .875rem 0 0; min-height: 1.55em; }
+  input[type="range"] {
+    --p: 50%;
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 2.75rem; margin: 1.25rem 0 0; background: transparent; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 8px; border-radius: 99px;
+    background: linear-gradient(to right, var(--accent) var(--p), var(--line) var(--p));
+  }
+  input[type="range"]::-moz-range-track { height: 8px; border-radius: 99px; background: var(--line); }
+  input[type="range"]::-moz-range-progress { height: 8px; border-radius: 99px; background: var(--accent); }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 30px; height: 30px; margin-top: -11px; border-radius: 50%;
+    background: var(--accent); border: 4px solid var(--bg); box-shadow: 0 0 0 2px var(--accent);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent); border: 4px solid var(--bg); box-shadow: 0 0 0 2px var(--accent);
+  }
+  .extremos { display: flex; justify-content: space-between; color: var(--ink-2); font-size: .9375rem; margin-top: .25rem; }
+
+  /* ---------- Botões ---------- */
+  .nav { display: flex; align-items: center; gap: .75rem; margin-top: 2.25rem; }
+  .nav[hidden] { display: none; }
+  .btn {
+    font: 600 1.0625rem/1 var(--ff-body);
+    border: 2px solid transparent; border-radius: 999px;
+    padding: .95rem 1.75rem; min-height: 3.25rem; cursor: pointer;
+  }
+  .btn-primario { background: var(--accent); color: var(--on-accent); margin-left: auto; }
+  .btn-secundario { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn-texto { background: transparent; color: var(--ink); padding-inline: .5rem; text-decoration: underline; text-underline-offset: 4px; }
+  .btn-primario:hover { filter: brightness(1.08); }
+  .btn-secundario:hover { border-color: var(--ink-2); }
+
+  /* ---------- Resultado ---------- */
+  .quadro-nota { display: grid; grid-template-columns: auto 1fr; gap: 1.5rem; align-items: center; margin: 1.5rem 0 2rem; }
+  .copo { width: 7.5rem; height: auto; display: block; }
+  .copo .agua { transform: translateY(180px); transition: transform 1.8s cubic-bezier(.22, .7, .2, 1); }
+  .copo .borda { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linejoin: round; }
+  .copo .vidro { fill: var(--surface); }
+  .copo .onda { fill: var(--water); }
+  .nota-num { font: 700 clamp(4.5rem, 22vw, 6.5rem)/.9 var(--ff-display); letter-spacing: -.05em; margin: 0; }
+  .nota-num small { font: 500 1.25rem var(--ff-body); letter-spacing: 0; color: var(--ink-2); margin-left: .25rem; }
+  .nota-frase { margin: .5rem 0 0; font-size: 1.125rem; max-width: 18rem; }
+
+  .itens { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.5rem; }
+  .item { border-left: 6px solid var(--cor, var(--line)); padding-left: 1rem; }
+  .item h3 { margin: 0 0 .25rem; font-size: 1.3125rem; font-weight: 700; line-height: 1.2; color: var(--cor, var(--ink)); }
+  .item p { margin: 0; }
+  .item .pts { color: var(--ink-2); font-size: .9375rem; margin-top: .375rem; }
+  .st-ok { --cor: var(--ok); } .st-atencao { --cor: var(--atencao); } .st-alerta { --cor: var(--alerta); }
+  .st-grave { --cor: var(--grave); } .st-info { --cor: var(--info); }
+
+  .aviso { color: var(--ink-2); font-size: .9375rem; margin: 2rem 0 0; max-width: 30rem; }
+  .acoes { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
+  .acoes .btn-primario { margin-left: 0; }
+  .status { min-height: 1.6em; margin: .75rem 0 0; color: var(--ink-2); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .trilho i, .copo .agua { transition: none; }
+  }
+  @media (max-width: 22rem) {
+    .duplo { grid-template-columns: 1fr; }
+    .quadro-nota { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<noscript><p style="padding:1.25rem">Esta página precisa de JavaScript para funcionar. Ative o JavaScript no navegador e recarregue.</p></noscript>
+
+<div class="app">
+  <div class="progresso" id="progresso" hidden>
+    <span id="progresso-texto">Pergunta 1 de 9</span>
+    <div class="trilho" aria-hidden="true"><i id="progresso-barra"></i></div>
+  </div>
+
+  <main>
+    <form id="form" novalidate autocomplete="off">
+
+      <!-- Introdução -->
+      <section class="passo" id="p-intro" aria-labelledby="t-intro">
+        <h1 id="t-intro" tabindex="-1">Meu Assistente de Bem-Estar</h1>
+        <p class="intro-texto">Nove perguntas rápidas. No fim você vê seu IMC, uma nota de hábitos e dicas sobre sono, água, movimento e estresse.</p>
+        <button type="submit" class="btn btn-primario" style="margin-left:0">Começar</button>
+        <p class="nota-privacidade">Suas respostas ficam só neste aparelho. Nada é enviado para a internet.</p>
+      </section>
+
+      <!-- 1. Nome -->
+      <section class="passo" id="p-nome" aria-labelledby="t-nome" hidden>
+        <h2 id="t-nome" tabindex="-1">Como você se chama?</h2>
+        <div class="campo">
+          <input type="text" id="nome" aria-labelledby="t-nome" aria-describedby="e-nome" autocomplete="given-name" placeholder="Seu nome" maxlength="40">
+          <p class="erro" id="e-nome" role="alert"></p>
+        </div>
+      </section>
+
+      <!-- 2. Ano de nascimento -->
+      <section class="passo" id="p-ano" aria-labelledby="t-ano" hidden>
+        <h2 id="t-ano" tabindex="-1">Em que ano você nasceu?</h2>
+        <div class="campo">
+          <input type="text" id="ano" inputmode="numeric" aria-labelledby="t-ano" aria-describedby="e-ano" placeholder="Exemplo: 1980" maxlength="4">
+          <p class="erro" id="e-ano" role="alert"></p>
+        </div>
+      </section>
+
+      <!-- 3. Cidade -->
+      <section class="passo" id="p-cidade" aria-labelledby="t-cidade" hidden>
+        <h2 id="t-cidade" tabindex="-1">Em que cidade você nasceu?</h2>
+        <div class="campo">
+          <input type="text" id="cidade" aria-labelledby="t-cidade" aria-describedby="e-cidade" placeholder="Sua cidade" maxlength="60">
+          <p class="erro" id="e-cidade" role="alert"></p>
+        </div>
+      </section>
+
+      <!-- 4. Humor -->
+      <section class="passo" id="p-humor" aria-labelledby="t-humor" hidden>
+        <h2 id="t-humor" tabindex="-1">Como você está hoje?</h2>
+        <fieldset class="opcoes duas" aria-labelledby="t-humor" aria-describedby="e-humor">
+          <label class="opcao"><input type="radio" name="humor" value="bem"><span>Bem 😁</span></label>
+          <label class="opcao"><input type="radio" name="humor" value="mal"><span>Mal 😢</span></label>
+        </fieldset>
+        <p class="retorno" id="retorno-humor" aria-live="polite"></p>
+        <p class="erro" id="e-humor" role="alert"></p>
+      </section>
+
+      <!-- 5. Altura e peso -->
+      <section class="passo" id="p-corpo" aria-labelledby="t-corpo" hidden>
+        <h2 id="t-corpo" tabindex="-1">Qual é a sua altura e o seu peso?</h2>
+        <div class="duplo campo">
+          <div>
+            <label class="rotulo" for="altura">Altura em centímetros</label>
+            <input type="text" id="altura" inputmode="decimal" aria-describedby="e-altura" placeholder="175">
+            <p class="erro" id="e-altura" role="alert"></p>
+          </div>
+          <div>
+            <label class="rotulo" for="peso">Peso em quilos</label>
+            <input type="text" id="peso" inputmode="decimal" aria-describedby="e-peso" placeholder="70,5">
+            <p class="erro" id="e-peso" role="alert"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Sono -->
+      <section class="passo" id="p-sono" aria-labelledby="t-sono" hidden>
+        <h2 id="t-sono" tabindex="-1">Quantas horas você dorme por noite?</h2>
+        <p class="valor" aria-hidden="true"><span id="v-sono">7</span><span class="unidade">horas</span></p>
+        <input type="range" id="sono" min="3" max="12" step="0.5" value="7" aria-labelledby="t-sono">
+        <div class="extremos" aria-hidden="true"><span>3 h</span><span>12 h</span></div>
+        <p class="dica-valor" id="d-sono" aria-live="polite"></p>
+      </section>
+
+      <!-- 7. Água -->
+      <section class="passo" id="p-agua" aria-labelledby="t-agua" hidden>
+        <h2 id="t-agua" tabindex="-1">Quantos copos de água você bebe por dia?</h2>
+        <p class="valor" aria-hidden="true"><span id="v-agua">4</span><span class="unidade">copos de 250 ml</span></p>
+        <input type="range" id="agua" min="0" max="15" step="1" value="4" aria-labelledby="t-agua">
+        <div class="extremos" aria-hidden="true"><span>0</span><span>15</span></div>
+        <p class="dica-valor" id="d-agua" aria-live="polite"></p>
+      </section>
+
+      <!-- 8. Atividade física -->
+      <section class="passo" id="p-ativ" aria-labelledby="t-ativ" hidden>
+        <h2 id="t-ativ" tabindex="-1">Em quantos dias da semana você se exercita?</h2>
+        <fieldset class="opcoes" aria-labelledby="t-ativ" aria-describedby="e-ativ">
+          <label class="opcao"><input type="radio" name="ativ" value="nenhuma"><span>Nenhum dia</span></label>
+          <label class="opcao"><input type="radio" name="ativ" value="1-2"><span>1 a 2 dias</span></label>
+          <label class="opcao"><input type="radio" name="ativ" value="3-4"><span>3 a 4 dias</span></label>
+          <label class="opcao"><input type="radio" name="ativ" value="5+"><span>5 dias ou mais</span></label>
+        </fieldset>
+        <p class="erro" id="e-ativ" role="alert"></p>
+      </section>
+
+      <!-- 9. Estresse -->
+      <section class="passo" id="p-estresse" aria-labelledby="t-estresse" hidden>
+        <h2 id="t-estresse" tabindex="-1">Qual é o seu nível de estresse hoje?</h2>
+        <p class="valor" aria-hidden="true"><span id="v-estresse">5</span><span class="unidade">de 10</span></p>
+        <input type="range" id="estresse" min="0" max="10" step="1" value="5" aria-labelledby="t-estresse">
+        <div class="extremos" aria-hidden="true"><span>0 · calmo</span><span>10 · muito estressado</span></div>
+        <p class="dica-valor" id="d-estresse" aria-live="polite"></p>
+      </section>
+
+      <!-- Resultado -->
+      <section class="passo" id="p-resultado" aria-labelledby="t-resultado" hidden>
+        <h2 id="t-resultado" tabindex="-1"></h2>
+        <p class="apoio" id="res-linhas" style="margin-top:-1rem"></p>
+        <div class="quadro-nota">
+          <div id="res-copo"></div>
+          <div>
+            <p class="nota-num" id="res-nota"></p>
+            <p class="nota-frase" id="res-frase"></p>
+          </div>
+        </div>
+        <ul class="itens" id="res-itens"></ul>
+        <p class="aviso">Este app é informativo e não substitui a avaliação de um médico ou nutricionista.</p>
+        <div class="acoes">
+          <button type="button" class="btn btn-primario" id="btn-compartilhar">Compartilhar minha nota</button>
+          <button type="button" class="btn btn-secundario" id="btn-refazer">Refazer</button>
+        </div>
+        <p class="status" id="status" role="status"></p>
+      </section>
+
+      <!-- Navegação -->
+      <div class="nav" id="nav" hidden>
+        <button type="button" class="btn btn-texto" id="btn-voltar">Voltar</button>
+        <button type="submit" class="btn btn-primario" id="btn-continuar">Continuar</button>
+      </div>
+    </form>
+  </main>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const ANO_ATUAL = new Date().getFullYear();
+  const ORDEM = ["intro", "nome", "ano", "cidade", "humor", "corpo", "sono", "agua", "ativ", "estresse", "resultado"];
+  const PERGUNTAS = ORDEM.slice(1, -1);
+  const $ = (s) => document.querySelector(s);
+  const form = $("#form");
+  const passos = Object.fromEntries(ORDEM.map((id) => [id, $("#p-" + id)]));
+  let atual = 0;
+  let notaFinal = 0;
+
+  const fmt = (n, casas = 1) =>
+    n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: casas });
+
+  /* ---------- Criação segura de elementos ---------- */
+  function h(tag, props = {}, ...filhos) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (k === "class") el.className = v;
+      else if (k === "text") el.textContent = v;
+      else el.setAttribute(k, v);
+    }
+    filhos.flat().forEach((f) => el.append(f));
+    return el;
+  }
+
+  /* ---------- Regras das dicas (iguais às do app em Python) ---------- */
+  function faixaImc(imc) {
+    const v = fmt(imc);
+    if (imc < 18.5) return { st: "atencao", titulo: `IMC ${v}: abaixo do peso`,
+      texto: "Seu peso está abaixo do esperado para a altura. Vale conversar com um médico ou nutricionista para avaliar a alimentação." };
+    if (imc < 25) return { st: "ok", titulo: `IMC ${v}: saudável. Parabéns!`,
+      texto: "Seu peso está dentro da faixa considerada saudável. Continue com os bons hábitos!" };
+    if (imc < 30) return { st: "alerta", titulo: `IMC ${v}: sobrepeso`,
+      texto: "Pequenos ajustes na alimentação e mais movimento no dia a dia já ajudam bastante." };
+    if (imc < 40) return { st: "alerta", titulo: `IMC ${v}: obesidade`,
+      texto: "O melhor caminho é buscar um médico ou nutricionista para um plano seguro e personalizado." };
+    return { st: "grave", titulo: `IMC ${v}: obesidade grave`,
+      texto: "Procure um médico para uma avaliação completa. Você não precisa fazer isso sozinho(a)." };
+  }
+
+  function dicaSono(horas) {
+    const t = fmt(horas);
+    if (horas < 6) return { st: "alerta", titulo: "Sono curto", pontos: 8,
+      texto: `Você dorme ${t} h por noite. Para adultos, o recomendado costuma ser de 7 a 9 h. Tente ter um horário fixo para deitar e evite telas 1 hora antes.` };
+    if (horas < 7) return { st: "atencao", titulo: "Quase lá", pontos: 15,
+      texto: `Você dorme ${t} h. Falta pouco para as 7 h recomendadas. Tente deitar um pouco mais cedo.` };
+    if (horas <= 9) return { st: "ok", titulo: "Sono em dia", pontos: 25,
+      texto: `${t} h por noite está dentro do recomendado (7 a 9 h). Continue assim!` };
+    return { st: "info", titulo: "Bastante sono", pontos: 18,
+      texto: `Você dorme ${t} h. Se mesmo assim acorda cansado(a), vale conversar com um médico.` };
+  }
+
+  function dicaAgua(copos, kg) {
+    const metaLitros = (kg * 35) / 1000; // referência geral: 35 ml por kg
+    const metaCopos = (metaLitros * 1000) / 250;
+    const bebeLitros = (copos * 250) / 1000;
+    const base = `Você bebe cerca de ${fmt(bebeLitros)} L por dia. Como referência geral (35 ml por kg), seu peso sugere cerca de ${fmt(metaLitros)} L`;
+    if (copos >= metaCopos * 0.9) return { st: "ok", titulo: "Hidratação em dia", pontos: 25, texto: base + "." };
+    const faltam = Math.max(1, Math.round(metaCopos - copos));
+    return { st: "info", titulo: "Beba mais água", pontos: 10,
+      texto: `${base}, ou seja, mais uns ${faltam} copos. Deixe uma garrafa por perto!` };
+  }
+
+  function dicaAtividade(chave) {
+    if (chave === "nenhuma") return { st: "alerta", titulo: "Que tal começar?", pontos: 5,
+      texto: "Caminhadas de 10 a 15 minutos já ajudam. A meta da OMS para adultos é 150 minutos de atividade moderada por semana." };
+    if (chave === "1-2") return { st: "atencao", titulo: "Bom começo", pontos: 15,
+      texto: "Tente chegar a 3 ou mais dias por semana, aos poucos." };
+    return { st: "ok", titulo: "Rotina ativa", pontos: 25,
+      texto: "Parabéns! Lembre de alongar e descansar para o corpo se recuperar." };
+  }
+
+  function dicaEstresse(n) {
+    if (n <= 3) return { st: "ok", titulo: "Tranquilidade", pontos: 25,
+      texto: "Seu nível de estresse está baixo. Continue cuidando de você!" };
+    if (n <= 6) return { st: "atencao", titulo: "Estresse moderado", pontos: 15,
+      texto: "Pausas curtas ajudam. Experimente respirar devagar: inspire por 4 segundos e solte por 6, repetindo 5 vezes." };
+    let texto = "Faça pausas, converse com alguém de confiança e, se essa sensação durar, procure um profissional de saúde.";
+    if (n >= 8) texto += " Se estiver muito difícil, o CVV atende 24 horas pelo 188 (ligação gratuita).";
+    return { st: "grave", titulo: "Estresse alto", pontos: 8, texto };
+  }
+
+  /* ---------- Validação ---------- */
+  function numero(texto) {
+    const t = String(texto).trim().replace(",", ".");
+    if (t === "") return NaN;
+    return Number(t);
+  }
+
+  function marcar(id, msg) {
+    const campo = $("#" + id);
+    const erro = $("#e-" + id);
+    if (campo && campo.type === "text") campo.setAttribute("aria-invalid", msg ? "true" : "false");
+    if (erro) erro.textContent = msg || "";
+    return !msg;
+  }
+
+  const validar = {
+    nome() {
+      return marcar("nome", $("#nome").value.trim() ? "" : "Digite seu nome para continuar.");
+    },
+    ano() {
+      const t = $("#ano").value.trim();
+      const n = /^\d{4}$/.test(t) ? Number(t) : NaN;
+      if (Number.isNaN(n)) return marcar("ano", "Digite o ano com 4 números. Exemplo: 1980.");
+      if (n < 1900 || n > ANO_ATUAL) return marcar("ano", `Digite um ano entre 1900 e ${ANO_ATUAL}.`);
+      return marcar("ano", "");
+    },
+    cidade() {
+      return marcar("cidade", $("#cidade").value.trim() ? "" : "Digite o nome da sua cidade.");
+    },
+    humor() {
+      const ok = !!form.elements.humor.value;
+      $("#e-humor").textContent = ok ? "" : "Escolha “Bem” ou “Mal” para continuar.";
+      return ok;
+    },
+    corpo() {
+      const alt = numero($("#altura").value);
+      const kg = numero($("#peso").value);
+      const okAlt = marcar("altura", Number.isFinite(alt) && alt >= 50 && alt <= 250 ? "" : "Digite a altura em centímetros. Exemplo: 175.");
+      const okKg = marcar("peso", Number.isFinite(kg) && kg >= 20 && kg <= 400 ? "" : "Digite o peso em quilos. Exemplo: 70,5.");
+      if (!okAlt) $("#altura").focus();
+      else if (!okKg) $("#peso").focus();
+      return okAlt && okKg;
+    },
+    ativ() {
+      const ok = !!form.elements.ativ.value;
+      $("#e-ativ").textContent = ok ? "" : "Escolha uma opção para continuar.";
+      return ok;
+    },
+  };
+
+  /* ---------- Controles deslizantes ---------- */
+  function ligarSlider(id, aoMudar) {
+    const el = $("#" + id);
+    const atualizar = () => {
+      const v = Number(el.value);
+      const p = ((v - Number(el.min)) / (Number(el.max) - Number(el.min))) * 100;
+      el.style.setProperty("--p", p + "%");
+      aoMudar(v);
+    };
+    el.addEventListener("input", atualizar);
+    atualizar();
+    return atualizar;
+  }
+
+  const atualizadores = [
+    ligarSlider("sono", (v) => {
+      $("#v-sono").textContent = fmt(v);
+      $("#d-sono").textContent = "O recomendado para adultos é de 7 a 9 horas.";
+    }),
+    ligarSlider("agua", (v) => {
+      $("#v-agua").textContent = v;
+      $("#d-agua").textContent = `Isso dá cerca de ${fmt(v * 0.25)} L por dia.`;
+    }),
+    ligarSlider("estresse", (v) => {
+      $("#v-estresse").textContent = v;
+      $("#d-estresse").textContent = v <= 3 ? "Calmo(a)." : v <= 6 ? "Estresse moderado." : "Estresse alto.";
+    }),
+  ];
+
+  document.querySelectorAll('input[name="humor"]').forEach((r) =>
+    r.addEventListener("change", () => {
+      $("#e-humor").textContent = "";
+      $("#retorno-humor").textContent =
+        r.value === "bem" ? "Que bom, fico feliz! 😁" : "Que chato, mas tenho certeza que vai melhorar! 😢";
+    })
+  );
+  document.querySelectorAll('input[name="ativ"]').forEach((r) =>
+    r.addEventListener("change", () => { $("#e-ativ").textContent = ""; })
+  );
+
+  /* ---------- Navegação entre perguntas ---------- */
+  function mostrar(i) {
+    atual = i;
+    ORDEM.forEach((id, k) => { passos[id].hidden = k !== i; });
+    const id = ORDEM[i];
+    const ePergunta = PERGUNTAS.includes(id);
+    $("#progresso").hidden = !ePergunta;
+    $("#nav").hidden = !ePergunta;
+    if (ePergunta) {
+      const n = PERGUNTAS.indexOf(id) + 1;
+      $("#progresso-texto").textContent = `Pergunta ${n} de ${PERGUNTAS.length}`;
+      $("#progresso-barra").style.width = (n / PERGUNTAS.length) * 100 + "%";
+      $("#btn-voltar").hidden = i === 1;
+      $("#btn-continuar").textContent = id === "estresse" ? "Ver minhas dicas" : "Continuar";
+    }
+    const campo = passos[id].querySelector('input[type="text"]');
+    const titulo = passos[id].querySelector("h1, h2");
+    (campo || titulo).focus({ preventScroll: false });
+    window.scrollTo({ top: 0 });
+  }
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const id = ORDEM[atual];
+    if (id === "resultado") return;
+    if (validar[id] && !validar[id]()) {
+      const primeiro = passos[id].querySelector('[aria-invalid="true"]');
+      if (primeiro) primeiro.focus();
+      return;
+    }
+    if (id === "estresse") { calcular(); }
+    mostrar(atual + 1);
+  });
+
+  $("#btn-voltar").addEventListener("click", () => { if (atual > 1) mostrar(atual - 1); });
+
+  /* ---------- Resultado ---------- */
+  function copoSvg(nota) {
+    // Interior do copo vai de y=8 (topo) a y=172 (fundo): o nível sobe conforme a nota.
+    const nivel = 172 - (nota / 100) * 164;
+    const wrap = h("div");
+    wrap.innerHTML = `
+      <svg class="copo" viewBox="0 0 120 180" role="img" aria-label="Copo com água até ${nota}% da altura">
+        <defs><clipPath id="copo-clip"><path d="M14 8 H106 L94 160 Q93 172 82 172 H38 Q27 172 26 160 Z"/></clipPath></defs>
+        <path class="vidro" d="M14 8 H106 L94 160 Q93 172 82 172 H38 Q27 172 26 160 Z"/>
+        <g clip-path="url(#copo-clip)">
+          <g class="agua" data-nivel="${nivel.toFixed(1)}">
+            <path class="onda" d="M-20 7 Q0 -1 20 7 T60 7 T100 7 T140 7 V220 H-20 Z"/>
+          </g>
+        </g>
+        <path class="borda" d="M14 8 H106 L94 160 Q93 172 82 172 H38 Q27 172 26 160 Z"/>
+      </svg>`;
+    return wrap.firstElementChild;
+  }
+
+  function calcular() {
+    const nome = $("#nome").value.trim();
+    const cidade = $("#cidade").value.trim();
+    const ano = Number($("#ano").value.trim());
+    const alt = numero($("#altura").value);
+    const kg = numero($("#peso").value);
+    const idade = ANO_ATUAL - ano;
+    const imc = kg / Math.pow(alt / 100, 2);
+
+    const habitos = [
+      dicaSono(Number($("#sono").value)),
+      dicaAgua(Number($("#agua").value), kg),
+      dicaAtividade(form.elements.ativ.value),
+      dicaEstresse(Number($("#estresse").value)),
+    ];
+    const nota = habitos.reduce((soma, d) => soma + d.pontos, 0);
+    notaFinal = nota;
+    const frase =
+      nota >= 80 ? "Excelente! Seus hábitos estão ótimos. 🌟"
+      : nota >= 55 ? "Bom caminho! Alguns ajustes e você chega lá. 💪"
+      : "Vamos melhorar aos poucos, um hábito de cada vez. 🌱";
+
+    $("#t-resultado").textContent = `${nome}, ${idade} ${idade === 1 ? "ano" : "anos"}.`;
+    $("#res-linhas").textContent =
+      (idade < 30 ? "Nossa, como você está jovem! 😎" : "Ops... tá ficando velho! 🤔") +
+      ` Nasceu em ${cidade}, uma cidade bem longe! 😊`;
+
+    const copo = $("#res-copo");
+    copo.replaceChildren(copoSvg(nota));
+    $("#res-nota").replaceChildren(String(nota), h("small", { text: "/100" }));
+    $("#res-frase").textContent = frase;
+
+    const itens = $("#res-itens");
+    itens.replaceChildren();
+    const f = faixaImc(imc);
+    itens.append(
+      h("li", { class: `item st-${f.st}` }, h("h3", { text: f.titulo }), h("p", { text: f.texto }))
+    );
+    habitos.forEach((d) =>
+      itens.append(
+        h("li", { class: `item st-${d.st}` },
+          h("h3", { text: d.titulo }),
+          h("p", { text: d.texto }),
+          h("p", { class: "pts", text: `${d.pontos} de 25 pontos` }))
+      )
+    );
+    $("#status").textContent = "";
+
+    // O copo enche uma única vez, depois que a tela aparece.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const agua = copo.querySelector(".agua");
+      if (agua) agua.style.transform = `translateY(${agua.dataset.nivel}px)`;
+    }));
+  }
+
+  /* ---------- Compartilhar e refazer ---------- */
+  $("#btn-compartilhar").addEventListener("click", async () => {
+    const texto = `Minha nota de hábitos: ${notaFinal}/100 no Meu Assistente de Bem-Estar. Faça o seu:`;
+    const url = location.href.split("#")[0];
+    if (navigator.share) {
+      try { await navigator.share({ title: "Meu Assistente de Bem-Estar", text: texto, url }); return; }
+      catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    try {
+      await navigator.clipboard.writeText(`${texto} ${url}`);
+      $("#status").textContent = "Texto copiado. Cole onde quiser.";
+    } catch {
+      $("#status").textContent = "Não foi possível copiar. Copie o endereço da página.";
+    }
+  });
+
+  $("#btn-refazer").addEventListener("click", () => {
+    form.reset();
+    document.querySelectorAll(".erro").forEach((e) => { e.textContent = ""; });
+    document.querySelectorAll('input[aria-invalid="true"]').forEach((i) => i.setAttribute("aria-invalid", "false"));
+    $("#retorno-humor").textContent = "";
+    atualizadores.forEach((f) => f());
+    mostrar(0);
+  });
+
+  mostrar(0);
+})();
+</script>
+</body>
+</html>
